@@ -23,7 +23,7 @@ A simple comic book reader application developed in C++ using the SFML library. 
 
 ## Usage
 1. **Add your comic files**:
-    - Place your comic book pages in the `comics/sample_comic/` directory. 
+    - Place your comic book pages in the `comics/` directory. 
     - The application currently supports .cbz comic files
 2. **Run the application**:
     ```sh
