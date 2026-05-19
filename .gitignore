@@ -1,2 +1,5 @@
 comics/
-comic.cbz
+*.cbz
+*.zip
+build/
+.DS_Store
