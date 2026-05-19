@@ -101,34 +101,59 @@ public:
 private:
     std::vector<sf::Texture> extractImagesFromComic(const std::string& comicFilePath) {
         std::vector<sf::Texture> images;
-        std::ifstream cbzFile(comicFilePath, std::ios::binary);
-        if (!cbzFile.is_open()) {
-            std::cerr << "Failed to open CBZ file: " << comicFilePath << std::endl;
+        namespace fs = std::filesystem;
+
+        if (!fs::exists(comicFilePath)) {
+            std::cerr << "CBZ not found: " << comicFilePath << std::endl;
             return images;
         }
 
-        std::vector<char> cbzData((std::istreambuf_iterator<char>(cbzFile)), std::istreambuf_iterator<char>());
-        cbzFile.close();
-
-        std::string imageData(cbzData.begin(), cbzData.end());
-        size_t start = imageData.find("\xff\xd8");
-        if (start == std::string::npos) return images;
-
-        size_t pos = start;
-        while (pos != std::string::npos) {
-            size_t end = imageData.find("\xff\xd9", pos);
-            if (end == std::string::npos) break;
-
-            std::string imageBuffer = imageData.substr(pos, end - pos + 2);
-            sf::Texture texture;
-            sf::Image image;
-            if (image.loadFromMemory(imageBuffer.data(), imageBuffer.size())) {
-                texture.loadFromImage(image);
-                images.push_back(texture);
-            }
-
-            pos = imageData.find("\xff\xd8", end);
+        // Create temporary extraction directory
+        std::string tmpBase = "/tmp/comic_reader_" + std::to_string((int)getpid());
+        fs::path tmpDir(tmpBase);
+        try {
+            if (fs::exists(tmpDir)) fs::remove_all(tmpDir);
+            fs::create_directories(tmpDir);
+        } catch (...) {
+            std::cerr << "Failed to create temp dir for CBZ extraction." << std::endl;
+            return images;
         }
+
+        // Use system 'unzip' to extract archive contents into tmpDir
+        auto quote = [](const std::string &s){ std::string r = "\'" + s + "\'"; return r; };
+        std::string cmd = "unzip -qq -o " + quote(comicFilePath) + " -d " + quote(tmpBase);
+        int rc = std::system(cmd.c_str());
+        if (rc != 0) {
+            std::cerr << "Failed to extract CBZ via unzip (rc=" << rc << "). Ensure 'unzip' is installed." << std::endl;
+            try { fs::remove_all(tmpDir); } catch(...){}
+            return images;
+        }
+
+        // Collect image files (common extensions) and load them in alphanumeric order
+        std::vector<fs::path> files;
+        for (auto &entry : fs::recursive_directory_iterator(tmpDir)) {
+            if (!entry.is_regular_file()) continue;
+            auto ext = entry.path().extension().string();
+            std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+            if (ext == ".jpg" || ext == ".jpeg" || ext == ".png" || ext == ".webp" || ext == ".bmp") {
+                files.push_back(entry.path());
+            }
+        }
+        std::sort(files.begin(), files.end());
+
+        for (auto &p : files) {
+            sf::Image image;
+            if (!image.loadFromFile(p.string())) {
+                std::cerr << "Failed to load image file: " << p << std::endl;
+                continue;
+            }
+            sf::Texture tex;
+            tex.loadFromImage(image);
+            images.push_back(std::move(tex));
+        }
+
+        // Clean up temporary extraction directory
+        try { fs::remove_all(tmpDir); } catch(...) {}
         return images;
     }
 };
