@@ -46,30 +46,62 @@ void main() {
     vec2 uv = gl_FragCoord.xy / u_resolution.xy;
     vec2 p = uv * vec2(u_resolution.x/u_resolution.y, 1.0);
 
-    // Procedural flame overlay (alpha indicates intensity)
-    float y = (1.0 - uv.y);
-    float n = fbm(vec2(p.x*u_layerScale, p.y*(u_layerScale*0.6) - u_time*u_speed));
-    float flame = smoothstep(0.15, 0.75, n * u_intensity + pow(y, 1.5)*1.8);
-    vec3 flameCol = mix(u_colorA, u_colorB, clamp((n+0.2)*1.2, 0.0, 1.0));
+    // Layered ribbon generation
+    const int LAYERS = 6;
+    float accum = 0.0;
+    vec3 accumCol = vec3(0.0);
 
-    // Add subtle horizontal streaks
-    float streak = fbm(vec2(p.x*6.0 + u_time*0.6, p.y*0.5));
-    vec3 streakCol = vec3(0.05, 0.01, 0.0) * pow(streak, 3.0) * (1.0 - uv.y);
+    // parameters controlling ribbon look
+    float baseThickness = 0.05; // base thickness of ribbons
+    float baseFreq = 1.2 * u_layerScale;
+    float baseAmp = 0.06;
 
-    // Color of overlay
-    vec3 overlay = flameCol * flame * u_glow + streakCol * 0.6 * u_glow;
+    for (int i = 0; i < LAYERS; ++i) {
+        float fi = float(i);
+        // vertical position for the ribbon band (spread out vertically)
+        float bandCenter = 0.5 + (fi - (LAYERS-1.0)/2.0) * 0.11;
 
-    // Vignette to darken edges of overlay
+        // per-layer motion and waviness
+        float freq = baseFreq * (0.8 + fi*0.18);
+        float amp = baseAmp * (1.0 + fi*0.25);
+        float speed = u_speed * (0.6 + fi*0.2);
+        float jitter = fbm(vec2(p.x*1.8 + fi*2.2, u_time*0.25 + fi*2.0))*0.1;
+
+        // compute ribbon center y using sin wave + noise
+        float centerY = bandCenter + sin(p.x*freq + u_time*speed + fi*1.9)*amp + jitter;
+
+        // thickness tapers depending on layer
+        float thickness = baseThickness * (1.0 - fi*0.07);
+
+        float d = abs(uv.y - centerY);
+        float edge = smoothstep(thickness*0.9, thickness, d);
+        // intensity stronger near center and attenuate with vertical position
+        float intensityMask = (1.0 - edge) * (1.0 - abs(bandCenter - 0.5)*0.8);
+
+        // color gradient per layer
+        vec3 col = mix(u_colorA, u_colorB, fi / float(LAYERS-1));
+
+        // accumulate additively
+        accum += intensityMask;
+        accumCol += col * intensityMask;
+    }
+
+    // tone and glow
+    vec3 overlay = accumCol * u_glow * u_intensity;
+    overlay = pow(overlay, vec3(1.0/1.05));
+
+    // subtle horizontal streaks to add detail
+    float streak = fbm(vec2(p.x*9.0 + u_time*0.9, p.y*0.5));
+    overlay += vec3(0.06,0.02,0.0) * pow(streak, 3.0) * (1.0 - uv.y) * u_glow;
+
+    // vignette
     float dx = uv.x - 0.5;
     float dy = uv.y - 0.5;
     float dist = sqrt(dx*dx + dy*dy);
-    float vign = smoothstep(0.95, 0.3, dist);
+    float vign = smoothstep(0.9, 0.35, dist);
+    overlay *= (1.0 - 0.7 * vign);
 
-    // Slight desaturation
-    float gray = dot(overlay, vec3(0.299, 0.587, 0.114));
-    overlay = mix(overlay, vec3(gray), 0.03);
-
-    // Output overlay with alpha proportional to flame intensity
-    float alpha = clamp(flame*0.85 + 0.1*pow(streak,2.0), 0.0, 1.0) * (1.0 - vign);
-    gl_FragColor = vec4(overlay * alpha, alpha);
+    // final alpha based on accumulated intensity
+    float alpha = clamp(accum*0.45, 0.0, 1.0);
+    gl_FragColor = vec4(overlay, alpha);
 }

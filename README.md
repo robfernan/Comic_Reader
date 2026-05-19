@@ -105,4 +105,37 @@ The shader file is at `src/shaders/background.frag`. The CMake build copies the 
 
 Next steps: integrate the shader into the main app UI, add title bar and carousel artwork rendering, and tune shader parameters to match the original art perfectly.
 
+## Progress: Ribbon shader + ImGui
+
+- Added an animated procedural ribbon shader (`src/shaders/background.frag`) that generates layered sine+noise ribbons and additive glow to mimic the "digital comics" ribbon effect.
+- Added an ImGui-powered demo (`demo_imgui`) so you can tweak parameters live: color A/B, speed, intensity, layer scale, and glow.
+- Built and tested on Debian Bookworm (SFML 2.5.1). The project vendors ImGui and ImGui-SFML (version-matched) to ensure builds are reproducible on Debian.
+
+Run the ImGui demo to tune the background:
+
+```bash
+cd /home/rf80678/Documents/SFML/Comic_Reader/build
+./demo_imgui
+```
+
+Goal: reproduce both screens from the PSP Digital Comics UI —
+1) the startup menu (left-side list with the selection bar) and
+2) the carousel view (centered cover carousel with highlighted item)
+
+Both screens will use the same animated flame ribbon background; next I'll integrate the background into the UI shell and start building the carousel and startup menu overlays.
+
+New shader: aurora-style ribbons
+
+I added a new shader that renders a dark, minimalist aurora-style background with smooth translucent ribbons (`src/shaders/aurora.frag`). It's tuned for deep red / dark orange palettes and soft layered translucency.
+
+To test it quickly (without recompiling), copy the shader into your build shaders folder so the demo can load it:
+
+```bash
+cp src/shaders/aurora.frag build/shaders/background.frag
+cd build
+./demo_imgui
+```
+
+Or edit the demo to load `aurora.frag` directly from `src/shaders/` if you prefer live-editing.
+
 
