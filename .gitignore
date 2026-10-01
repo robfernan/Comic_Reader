@@ -1,4 +1,7 @@
 comics/
+Comics/
+comic_pages/
+comic_pages1/
 *.cbz
 *.zip
 build/

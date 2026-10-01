@@ -1,7 +1,7 @@
 # Comic Book Reader
 
 ## Description
-A **PSP Digital Comics-inspired** reader for modern Linux desktops. Built in C++ with SFML, this application delivers a **clean, minimal interface** for reading CBZ comic files with smooth navigation and intuitive controls. No clutter—just reading.
+A **PSP Digital Comics-inspired** reader for modern desktops (Linux & Windows). Built in C++ with SFML and ImGui, this application delivers a **clean, minimal interface** for reading comic book archives with smooth navigation and intuitive controls. No clutter—just reading.
 
 **Design Philosophy:** Simple, fast, elegant. Like the original PSP Comics Reader, but modernized for 2026.
 
@@ -32,8 +32,8 @@ A **PSP Digital Comics-inspired** reader for modern Linux desktops. Built in C++
 
 ## Usage
 1. **Add your comic files**:
-    - Place your comic book pages in the `comics/` directory. 
-    - The application currently supports .cbz comic files
+    - Place your comic book archives in the `Comics/` or `comics/` directory.
+    - Supported formats: `.cbz` (ZIP-based), `.cbr` (RAR-based, planned), `.pdf` (planned)
 2. **Run the application**:
     ```sh
     ./comic
@@ -53,22 +53,27 @@ A **PSP Digital Comics-inspired** reader for modern Linux desktops. Built in C++
 
 ### Phase 1: Foundation (Current)
 - [x] Core SFML rendering working with CBZ files
-- [ ] **CMake build system** — Replace manual g++ compilation
-- [ ] **Project restructuring** — src/, include/, assets/, build/ separation
-- [ ] **.gitignore improvements** — Exclude CBZ files, build artifacts
+- [x] **CMake build system** — Replace manual g++ compilation
+- [x] **Project restructuring** — src/, include/, assets/, build/ separation
+- [x] **.gitignore improvements** — Exclude comic archives, build artifacts
 
-### Phase 2: Robust CBZ Handling
+### Phase 2: Multi-Format Support (In Progress)
+- [x] CBZ archive extraction via system unzip
 - [ ] **libzip integration** — Replace manual binary searching with proper ZIP/CBZ parsing
+- [ ] **CBR support** — Add RAR-based comic archive handling
+- [ ] **PDF support** — Add PDF comic book reading
 - [ ] **Image caching** — Load extracted images into temp memory efficiently
 - [ ] **Error handling** — Graceful fallbacks, user-friendly error messages
 - [ ] **Metadata support** — Read EPUB/CBZ metadata when available
 
-### Phase 3: UX Polish (PSP-Style)
+### Phase 3: PSP Digital Comics UI Recreation (In Progress)
+- [x] Aurora shader background matching PSP flame effect
+- [ ] **ImGui integration** — Replace mock UI with authentic PSP-style widgets
+- [ ] **Startup menu** — Browse Collection, Recently Added, Unread, Bookmarks, Options
+- [ ] **Carousel browser** — Horizontal cover flow layout with selection highlights
 - [ ] **Smart fit modes** — Fit-to-width, fit-to-height, 100%, best-fit
 - [ ] **Dual-page mode** — Side-by-side reading (like manga)
 - [ ] **Bookmarks** — Remember last page per comic
-- [ ] **Config file** — Keybindings, UI preferences
-- [ ] **Dark mode** — Eye-friendly reading
 
 ### Phase 4: Advanced Features
 - [ ] **Library browser** — File picker UI, recent files
@@ -76,11 +81,11 @@ A **PSP Digital Comics-inspired** reader for modern Linux desktops. Built in C++
 - [ ] **Performance** — Async image loading, preload next page
 - [ ] **Export** — Save page as PNG
 
-### Tech Stack (Target)
-- **Build:** CMake 3.20+
-- **Libraries:** SFML 2.5.1, libzip, spdlog (logging)
+### Tech Stack
+- **Build:** CMake 3.10+
+- **Libraries:** SFML 2.5+, ImGui, ImGui-SFML
 - **C++ Standard:** C++17
-- **Platform:** Linux (Debian/Ubuntu primary)
+- **Platforms:** Linux (primary), Windows 11
 
 ## Contributing
 This is a passion project to bring the elegant PSP Comics Reader experience to modern Linux. Pull requests welcome!
